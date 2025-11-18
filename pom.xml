@@ -3,7 +3,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.jotschi.ai</groupId>
-	<artifactId>dataset-translator</artifactId>
+	<artifactId>dataset-processor</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 
@@ -18,12 +18,12 @@
 		<dependency>
 			<groupId>org.apache.arrow</groupId>
 			<artifactId>arrow-dataset</artifactId>
-			<version>16.1.0</version>
+			<version>18.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.arrow</groupId>
 			<artifactId>arrow-memory-netty</artifactId>
-			<version>16.1.0</version>
+			<version>18.3.0</version>
 			<scope>runtime</scope>
 		</dependency>
 
