@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.apache.arrow.dataset.file.FileFormat;
@@ -25,7 +26,7 @@ import me.tongfei.progressbar.ProgressBar;
 public abstract class AbstractProcessor<T extends DatasetEntry> implements Processor<T> {
 
 	public void process(File datasetFolder, String filter, DatasetEntryHandler<T> processor) {
-		ProgressBar pb = new ProgressBar("Scan", 1000);
+		ProgressBar pb = new ProgressBar("Scan", 60_000);
 
 		FilenameFilter filenameFilter = (dir, name) -> name.endsWith(".parquet");
 		for (File file : datasetFolder.listFiles(filenameFilter)) {
@@ -38,8 +39,9 @@ public abstract class AbstractProcessor<T extends DatasetEntry> implements Proce
 	}
 
 	private void scanFile(ProgressBar pb, File file, DatasetEntryHandler<T> processor) {
+		AtomicLong id = new AtomicLong(0);
 		scanFile(file, row -> {
-			T entry = toDatasetEntry(row);
+			T entry = toDatasetEntry(id.getAndIncrement(), row);
 			processor.process(entry);
 			if (pb != null) {
 				pb.step();
@@ -49,7 +51,7 @@ public abstract class AbstractProcessor<T extends DatasetEntry> implements Proce
 
 	protected abstract List<String> fields();
 
-	protected abstract T toDatasetEntry(Row row);
+	protected abstract T toDatasetEntry(long id, Row row);
 
 	private void scanFile(File file, Consumer<Row> rowConsumer, List<String> fields) {
 		String uri = file.toURI().toString();

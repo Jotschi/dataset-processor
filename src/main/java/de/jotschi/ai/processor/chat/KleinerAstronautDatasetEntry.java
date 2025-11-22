@@ -4,7 +4,7 @@ import de.jotschi.ai.processor.DatasetEntry;
 
 public class KleinerAstronautDatasetEntry implements DatasetEntry {
 
-	private int rowNum;
+	private long id;
 	private String topic;
 	private String adj1;
 	private String adj2;
@@ -13,9 +13,9 @@ public class KleinerAstronautDatasetEntry implements DatasetEntry {
 	private String word2;
 	private String text;
 
-	public KleinerAstronautDatasetEntry(int rowNum, String topic, String adj1, String adj2, String verb, String word1,
+	public KleinerAstronautDatasetEntry(long id, String topic, String adj1, String adj2, String verb, String word1,
 			String word2, String text) {
-		this.rowNum = rowNum;
+		this.id = id;
 		this.topic = topic;
 		this.adj1 = adj1;
 		this.adj2 = adj2;
@@ -26,8 +26,8 @@ public class KleinerAstronautDatasetEntry implements DatasetEntry {
 	}
 
 	@Override
-	public int rowNum() {
-		return rowNum;
+	public long id() {
+		return id;
 	}
 
 	public String topic() {

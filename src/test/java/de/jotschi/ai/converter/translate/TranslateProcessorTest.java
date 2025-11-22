@@ -1,8 +1,6 @@
-package de.jotschi.ai.converter;
+package de.jotschi.ai.converter.translate;
 
 import org.junit.jupiter.api.Test;
-
-import de.jotschi.ai.processor.AbstractProcessor;
 
 public class TranslateProcessorTest {
 

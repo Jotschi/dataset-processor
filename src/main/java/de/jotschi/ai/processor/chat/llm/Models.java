@@ -1,4 +1,4 @@
-package de.jotschi.ai.converter;
+package de.jotschi.ai.processor.chat.llm;
 
 import io.metaloom.ai.genai.llm.LLMProviderType;
 import io.metaloom.ai.genai.llm.LargeLanguageModel;

@@ -6,10 +6,10 @@ public class ChatQADatasetEntry implements DatasetEntry {
 
 	private final String messages;
 	private final String source;
-	private final int rowNum;
+	private final long id;
 
-	public ChatQADatasetEntry(int rowNum, String messages, String source) {
-		this.rowNum = rowNum;
+	public ChatQADatasetEntry(long id, String messages, String source) {
+		this.id = id;
 		this.messages = messages;
 		this.source = source;
 	}
@@ -28,7 +28,7 @@ public class ChatQADatasetEntry implements DatasetEntry {
 	}
 
 	@Override
-	public int rowNum() {
-		return rowNum;
+	public long id() {
+		return id;
 	}
 }

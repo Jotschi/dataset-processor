@@ -16,7 +16,7 @@ public class TranslatingProcessor extends AbstractProcessor<ChatQADatasetEntry> 
 	}
 
 	@Override
-	protected ChatQADatasetEntry toDatasetEntry(Row row) {
+	protected ChatQADatasetEntry toDatasetEntry(long id, Row row) {
 		List<?> msgs = row.getList("messages");
 		for (Object msg : msgs) {
 			if (msg instanceof JsonStringHashMap jsonMap) {

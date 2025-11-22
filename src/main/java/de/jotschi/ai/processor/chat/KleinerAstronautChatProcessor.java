@@ -26,8 +26,7 @@ public class KleinerAstronautChatProcessor extends AbstractProcessor<KleinerAstr
 	}
 
 	@Override
-	protected KleinerAstronautDatasetEntry toDatasetEntry(Row row) {
-		int rowNum = row.getRowNumber();
+	protected KleinerAstronautDatasetEntry toDatasetEntry(long id, Row row) {
 		String topic = row.getVarCharObj("topic");
 		String adj1 = row.getVarCharObj("adjective_1");
 		String adj2 = row.getVarCharObj("adjective_2");
@@ -36,6 +35,6 @@ public class KleinerAstronautChatProcessor extends AbstractProcessor<KleinerAstr
 		String word2 = row.getVarCharObj("word_2");
 		String text = row.getVarCharObj("text");
 
-		return new KleinerAstronautDatasetEntry(rowNum, topic, adj1, adj2, verb, word1, word2, text);
+		return new KleinerAstronautDatasetEntry(id, topic, adj1, adj2, verb, word1, word2, text);
 	}
 }
