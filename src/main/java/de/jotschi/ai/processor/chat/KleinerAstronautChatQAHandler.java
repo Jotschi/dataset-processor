@@ -13,6 +13,7 @@ import de.jotschi.ai.processor.chat.llm.anfrage.qa.QAGenerator;
 import de.jotschi.ai.processor.chat.llm.anfrage.qa.QuestionAnswerResult;
 import io.metaloom.ai.genai.llm.LLMProvider;
 import io.metaloom.ai.genai.llm.LargeLanguageModel;
+import io.metaloom.ai.genai.utils.TextUtils;
 import io.vertx.core.json.JsonObject;
 
 public class KleinerAstronautChatQAHandler implements DatasetEntryHandler<KleinerAstronautDatasetEntry> {
@@ -36,6 +37,12 @@ public class KleinerAstronautChatQAHandler implements DatasetEntryHandler<Kleine
 //		}
 		try {
 			String text = entry.text();
+
+			if (TextUtils.count('*', text) > 0) {
+				System.err.println("Skipping story " + entry.id() + " - malformed content '*'");
+				return;
+			}
+
 			String word1 = entry.word1();
 			String word2 = entry.word2();
 

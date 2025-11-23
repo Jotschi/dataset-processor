@@ -14,15 +14,30 @@ import io.vertx.core.json.JsonObject;
 
 public class Dataset2ChatTest {
 
+	public static final File INPUT_DATASET = new File("dataset", "kleiner_astronaut_qa_v3.jsonl");
+	public static final File OUTPUT_TRAIN = new File("dataset", "kleiner_astronaut_conversations_v3_train.jsonl");
+	public static final File OUTPUT_VAL = new File("dataset", "kleiner_astronaut_conversations_v3_val.jsonl");
+
 	@Test
 	public void testConvert() throws IOException {
-		File chatJsonL = new File("dataset", "kleiner_astronaut_conversations_v2.jsonl");
-		if (chatJsonL.exists()) {
-			chatJsonL.delete();
+		if (OUTPUT_TRAIN.exists()) {
+			OUTPUT_TRAIN.delete();
 		}
-		File dataset = new File("dataset", "kleiner_astronaut_qa_v2.jsonl");
-		List<String> lines = FileUtils.readLines(dataset, Charset.defaultCharset());
+
+		if (OUTPUT_VAL.exists()) {
+			OUTPUT_VAL.delete();
+		}
+
+		List<String> lines = FileUtils.readLines(INPUT_DATASET, Charset.defaultCharset());
+		int total = lines.size();
+		int val_size = (int) (total * 0.05f);
+
 		for (String line : lines) {
+			File destFile = OUTPUT_TRAIN;
+			if (val_size >= 0) {
+				destFile = OUTPUT_VAL;
+				val_size--;
+			}
 			line = line.trim();
 			line = TextUtils.trimNonAsciiFromEnd(line);
 			if (line.isEmpty()) {
@@ -33,7 +48,7 @@ public class Dataset2ChatTest {
 				JsonArray conv = toChat(json);
 				if (conv != null) {
 					// System.out.println(conv.encodePrettily());
-					FileUtils.writeStringToFile(chatJsonL, conv.encode() + "\n", Charset.defaultCharset(), true);
+					FileUtils.writeStringToFile(destFile, conv.encode() + "\n", Charset.defaultCharset(), true);
 				}
 			} catch (Exception e) {
 				System.out.println(line);
@@ -47,11 +62,15 @@ public class Dataset2ChatTest {
 		if (request == null) {
 			return null;
 		}
+		String request_word_1 = json.getString("request_word_1");
+		String request_word_2 = json.getString("request_word_2");
+		String answer_word = json.getString("answer_word");
+
 		String story = json.getString("story");
 		if (TextUtils.count('*', story) > 0) {
 			return null;
 		}
-		if(story.contains("\":")) {
+		if (story.contains("\":")) {
 			return null;
 		}
 		String answer = json.getString("answer");
@@ -59,14 +78,14 @@ public class Dataset2ChatTest {
 
 		JsonArray chat = new JsonArray();
 		chat.add(message("user", request));
-		chat.add(message("assistant", story));
+		chat.add(message("assistant", story).put("rl_key1", request_word_1).put("rl_key2", request_word_2));
 		chat.add(message("user", question));
-		chat.add(message("assistant", answer));
+		chat.add(message("assistant", answer).put("rl_key1", answer_word));
 
 		return chat;
 	}
 
-	private Object message(String role, String msg) {
+	private JsonObject message(String role, String msg) {
 		return new JsonObject().put("role", role).put("content", msg);
 	}
 }
