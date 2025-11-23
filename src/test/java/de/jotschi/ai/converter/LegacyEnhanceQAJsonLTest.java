@@ -37,7 +37,7 @@ public class LegacyEnhanceQAJsonLTest {
 //			}
 
 			String source = json.getString("source");
-			AnfrageResult result = gen.generateTriggerQuestion(source, null);
+			AnfrageResult result = gen.generateTriggerQuestion(source, null, null);
 			if (result != null) {
 				json.put("anfrage", result.anfrage());
 				// System.out.println(enhanced.encodePrettily());

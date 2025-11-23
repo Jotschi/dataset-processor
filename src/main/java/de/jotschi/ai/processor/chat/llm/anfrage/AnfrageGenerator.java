@@ -21,15 +21,16 @@ public class AnfrageGenerator extends AbstractGenerator {
 			"Schreib mir", "Schreib ein", "Erzähle mir", "Kannst du mir", "Bitte erzähle mir", "Eine Geschichte",
 			"Ein Abendteuer", "Es war einmal", "Ich möchte gerne", "Lies mir", "Kannst du");
 
+	// Du möchtest eine kurze Kindergeschichte hören.
+
 	final String GENERATE_ANFRAGE_PROMPT_TEMPLATE = """
 			Du bist ein 8-jähriges Kind.
-			Du möchtest eine kurze Kindergeschichte hören.
 
-			Schreibe eine einzige Anfrage, die zu der folgenden Geschichte passt.
+			Schreibe eine einzige Anfrage, die zu der zu folgenden Text passt.
 
 			Wichtig:
 
-			Die Anfrage muss mit '${anfang}' beginnen.
+			Die Anfrage muss mit '${anfang}' beginnen und '${word1}'/'${word2}' beinhalten.
 
 			Maximal 1 Satz.
 
@@ -43,18 +44,12 @@ public class AnfrageGenerator extends AbstractGenerator {
 			"Schreibe mir", "Erfinde eine", "Schreib eine", "Schreib mir",
 			"Schreib ein", "Erzähle mir", "Kannst du mir", "Bitte erzähle mir",
 			"Eine Geschichte", "Ein Abenteuer", "Es war einmal",
-			"Ich möchte gerne", "Lies mir", "Kannst du"
+			"Ich möchte gerne", "Lies mir..vor", "Kannst du"
 
-			Vervollständige die Anfang: '${anfang}'
-			Gib auch ein Schlüsselwort für die Anfrage aus. Das Schlüsselwort muss in der Geschichte vorkommen.
+			Vervollständige diesen Anfang:
+			'${anfang}..'
 
-			Gib JSON aus:
-			{
-				"anfrage": "${anfang}.."
-				"schlüsselwort": "..."
-			}
-
-			Geschichte:
+			Text:
 			${text}
 			""";
 
@@ -62,27 +57,25 @@ public class AnfrageGenerator extends AbstractGenerator {
 		super(llm, model);
 	}
 
-	public AnfrageResult generateTriggerQuestion(String story, String word1) {
+	public AnfrageResult generateTriggerQuestion(String story, String word1, String word2) {
 		for (int i = 0; i < RETRY_MAX; i++) {
 			String randomAnfang = ANFRAGE_LIST.get(rand.nextInt(ANFRAGE_LIST.size()));
 
 			Prompt prompt = new PromptImpl(GENERATE_ANFRAGE_PROMPT_TEMPLATE);
 			story = TextUtils.softClamp(story, STORY_MAX_LEN, '?', '.', '!', '\n');
 			prompt.set("text", TextUtils.quote(story));
+			prompt.set("word1", word1);
+			prompt.set("word2", word2);
 			prompt.set("anfang", randomAnfang);
 
 			LLMContext ctx = LLMContext.ctx(prompt, model);
 			ctx.setTemperature(0.25);
 			try {
-				JsonObject anfrageJson = llm.generateJson(ctx);
-				String anfrage = anfrageJson.getString("anfrage");
-				String key = anfrageJson.getString("schlüsselwort");
+				String anfrage = llm.generate(ctx);
 
 				// Retry on invalid JSON
-				if (anfrageJson == null || anfrage == null || key == null || anfrage.isEmpty() || key.isEmpty()
-						|| anfrage.contains("..") || key.contains("..")) {
-					String json = anfrageJson == null ? "null" : anfrageJson.encode();
-					System.out.println("Retry.. " + i + " JSON invalid/incomplete: " + json);
+				if (anfrage == null || anfrage.isEmpty() || anfrage.contains("..")) {
+					System.err.println("Retry.. " + i + " Text invalid/incomplete: " + anfrage);
 					continue;
 				}
 
@@ -94,18 +87,26 @@ public class AnfrageGenerator extends AbstractGenerator {
 						|| anfrage.toLowerCase().contains("anweisung") || anfrage.length() > ANFRAGE_OUTPUT_MAX_LEN) {
 					int len = anfrage.length();
 					// System.out.println(prompt.input());
-					System.out.println("Retry.. " + i + " " + anfrage + " / " + randomAnfang + ", len: " + len
+					System.err.println("Retry.. " + i + " " + anfrage + " / " + randomAnfang + ", len: " + len
 							+ ", limit: " + ANFRAGE_OUTPUT_MAX_LEN);
 					continue;
 				}
 
-				// Retry on invalid case - Quality gate - key
-				key = key.replace("\"", "").replace("'", "");
-				if (!story.toLowerCase().contains(key.toLowerCase())) {
-					System.out.println("Retry.. " + i + " key not found in story: " + key);
+				// Poor mans declension handling
+				String word1Needle = word1.toLowerCase();
+				word1Needle = word1Needle.substring(0, word1Needle.length() - 2);
+				String word2Needle = word1.toLowerCase();
+				word2Needle = word2Needle.substring(0, word2Needle.length() - 2);
+
+				boolean hasWord1 = anfrage.toLowerCase().contains(word1Needle);
+				boolean hasWord2 = anfrage.toLowerCase().contains(word2Needle);
+
+				if (!hasWord1 || !hasWord2) {
+					System.err.println("Retry.. " + i + " " + anfrage + " - lacking word " + word1Needle + " / " + word2Needle);
 					continue;
 				}
-				return new AnfrageResult(anfrage, key);
+
+				return new AnfrageResult(anfrage, word1, word2);
 			} catch (Exception e) {
 				System.out.println("Retry.. " + i + " " + e.getMessage());
 				e.printStackTrace();

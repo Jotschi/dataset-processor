@@ -31,31 +31,49 @@ public class KleinerAstronautChatQAHandler implements DatasetEntryHandler<Kleine
 
 	@Override
 	public void process(KleinerAstronautDatasetEntry entry) {
-		if (entry.id() <= 20738) {
-			return;
-		}
+//		if (entry.id() <= 20738) {
+//			return;
+//		}
 		try {
 			String text = entry.text();
 			String word1 = entry.word1();
 			String word2 = entry.word2();
 
-			AnfrageResult result = anfrageGenerator.generateTriggerQuestion(text, word1);
+			// Poor mans declension handling
+			String word1Needle = word1.toLowerCase();
+			word1Needle = word1Needle.substring(0, word1Needle.length() - 2);
+			String word2Needle = word1.toLowerCase();
+			word2Needle = word2Needle.substring(0, word2Needle.length() - 2);
+
+			// Only accept stories that are consistent with the words
+			boolean hasWord1 = text.toLowerCase().contains(word1Needle);
+			boolean hasWord2 = text.toLowerCase().contains(word2Needle);
+
+			if (!hasWord1 || !hasWord2) {
+				System.err.println(
+						"Skipping story " + entry.id() + " - lacking words: " + word1Needle + " / " + word2Needle);
+				return;
+			}
+
+			AnfrageResult result = anfrageGenerator.generateTriggerQuestion(text, word1, word2);
 			QuestionAnswerResult qa = qaGenerator.generateQA(text);
 			if (qa != null) {
 				JsonObject jsonOut = new JsonObject();
 				jsonOut.put("id", entry.id());
 				jsonOut.put("request", result.anfrage());
+				jsonOut.put("request_word_1", result.word1());
+				jsonOut.put("request_word_2", result.word2());
 				jsonOut.put("story", text);
-				jsonOut.put("question_typ", qa.typ());
+				jsonOut.put("story_adj_1", entry.adj1());
+				jsonOut.put("story_adj_2", entry.adj2());
+				jsonOut.put("story_topic", entry.topic());
+				jsonOut.put("story_verb", entry.verb());
+				jsonOut.put("story_word_1", word1);
+				jsonOut.put("story_word_2", word2);
 				jsonOut.put("question", qa.question());
+				jsonOut.put("question_typ", qa.typ());
 				jsonOut.put("answer", qa.answer());
-
-				jsonOut.put("adj_1", entry.adj1());
-				jsonOut.put("adj_2", entry.adj2());
-				jsonOut.put("topic", entry.topic());
-				jsonOut.put("verb", entry.verb());
-				jsonOut.put("word_1", word1);
-				jsonOut.put("word_2", word2);
+				jsonOut.put("answer_word", qa.word());
 				try {
 					FileUtils.writeStringToFile(outputFile, jsonOut.encode() + "\n", Charset.defaultCharset(), true);
 				} catch (IOException e) {

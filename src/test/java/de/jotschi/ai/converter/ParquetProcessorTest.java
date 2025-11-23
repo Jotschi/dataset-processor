@@ -20,9 +20,9 @@ public class ParquetProcessorTest {
 	public void testQA() {
 		File datasetFolder = new File("dataset", "kleiner_astronaut");
 
-		LargeLanguageModel model = Models.OLLAMA_PHI3_MINI;
+		LargeLanguageModel model = Models.OLLAMA_MISTRAL_SMALL_32_24B_Q8;
 		LLMProvider ollama = new OllamaLLMProvider();
-		File datasetOut = new File("dataset", "kleiner_astronaut_qa_v2.jsonl");
+		File datasetOut = new File("dataset", "kleiner_astronaut_qa_v3.jsonl");
 		KleinerAstronautChatQAHandler handler = new KleinerAstronautChatQAHandler(datasetOut, ollama, model);
 		KleinerAstronautChatProcessor c = new KleinerAstronautChatProcessor(handler);
 		c.process(datasetFolder, "train");

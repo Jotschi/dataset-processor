@@ -25,18 +25,21 @@ public class QAGenerator extends AbstractGenerator {
 			Schreib eine einzelne kurze, einfache kindgerechte ${typ}-Frage und die kurze Antwort passend zu der Geschichte.
 			Umschreibe komplizierte Wörter so das sie von Kindern verstanden werden können. Vermeide komplizierte Fragen.
 
-            * Beginne mit ${typ}...
-			* Verwende sehr einfache Sprache. 
-			* Halte dich sehr kurz. 
+			         * Beginne mit ${typ}...
+			* Verwende sehr einfache Sprache.
+			* Halte dich sehr kurz.
 			* Maximal ein Satz und maximal 100 Zeichen.
+			* Gib via 'antwort_wort' auch das zentrale Nomen/Wert der Antwort aus.
 
 			Geschichte:
 			${text}
 
 			Gib JSON aus:
 			{
-				"frage": "${typ}..."
-				"antwort": "..."
+				"frage": "${typ}...",
+				"antwort": "...",
+				"antwort_wort": "...",
+				"antwort_wort_typ": "Nomen|Zahl"
 			}
 			""";
 
@@ -45,9 +48,9 @@ public class QAGenerator extends AbstractGenerator {
 		for (int i = 0; i < RETRY_MAX; i++) {
 			String randomFrageTyp = W_FRAGEN.get(rand.nextInt(W_FRAGEN.size()));
 			Prompt prompt = new PromptImpl(ANFRAGE_PROMPT_TEMPLATE);
-			
-			if(story.length()>1000) {
-				story = story.substring(0,1000);
+
+			if (story.length() > 1000) {
+				story = story.substring(0, 1000);
 			}
 			prompt.set("text", TextUtils.quote(story));
 			prompt.set("typ", randomFrageTyp);
@@ -57,6 +60,7 @@ public class QAGenerator extends AbstractGenerator {
 				JsonObject json = llm.generateJson(ctx);
 				String frage = json.getString("frage");
 				String antwort = json.getString("antwort");
+				String word = json.getString("antwort_wort");
 				// Retry on invalid case - Quality gate
 				boolean invalidFrage = frage == null || frage.isEmpty() || TextUtils.count('?', frage) > 1
 						|| frage.contains("...") || !frage.startsWith(randomFrageTyp)
@@ -64,11 +68,24 @@ public class QAGenerator extends AbstractGenerator {
 
 				boolean invalidAnswer = antwort == null || antwort.isEmpty() || antwort.contains("...");
 				if (invalidFrage || invalidAnswer) {
-					System.out.println("Retry.. " + i + " " + frage + " / " + randomFrageTyp);
+					System.err.println("Retry.. " + i + " - invalid question - " + frage + " / " + randomFrageTyp);
 					continue;
 				}
 
-				return new QuestionAnswerResult(frage, antwort, randomFrageTyp);
+				if (word == null || word.isEmpty() || !antwort.toLowerCase().contains(word.toLowerCase())) {
+					System.err.println("Retry.. " + i + " - invalid word - " + antwort + " / " + word);
+					continue;
+				}
+
+				if (word.length() > 5 && !TextUtils.isNumber(word)) {
+					String wordNeedle = word.toLowerCase().substring(0, word.length() - 2);
+					if(!story.toLowerCase().contains(wordNeedle)) {
+						System.err.println("Retry.. " + i + " - word needle not found in story - " + wordNeedle);
+						continue;
+					}
+				}
+
+				return new QuestionAnswerResult(frage, antwort, randomFrageTyp, word);
 			} catch (Exception e) {
 				System.out.println("Retry.. " + i + " " + e.getMessage());
 				e.printStackTrace();
@@ -78,5 +95,4 @@ public class QAGenerator extends AbstractGenerator {
 		return null;
 	}
 
-	
 }
