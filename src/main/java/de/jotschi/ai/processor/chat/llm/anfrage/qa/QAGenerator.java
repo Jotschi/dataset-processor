@@ -1,7 +1,8 @@
-package de.jotschi.ai.processor.chat.llm;
+package de.jotschi.ai.processor.chat.llm.anfrage.qa;
 
 import java.util.List;
 
+import de.jotschi.ai.processor.chat.llm.AbstractGenerator;
 import io.metaloom.ai.genai.llm.LLMContext;
 import io.metaloom.ai.genai.llm.LLMProvider;
 import io.metaloom.ai.genai.llm.LargeLanguageModel;
@@ -39,7 +40,7 @@ public class QAGenerator extends AbstractGenerator {
 			}
 			""";
 
-	public QuestionAnswer generateQA(String story) {
+	public QuestionAnswerResult generateQA(String story) {
 
 		for (int i = 0; i < RETRY_MAX; i++) {
 			String randomFrageTyp = W_FRAGEN.get(rand.nextInt(W_FRAGEN.size()));
@@ -57,7 +58,7 @@ public class QAGenerator extends AbstractGenerator {
 				String frage = json.getString("frage");
 				String antwort = json.getString("antwort");
 				// Retry on invalid case - Quality gate
-				boolean invalidFrage = frage == null || frage.isEmpty() || count('?', frage) > 1
+				boolean invalidFrage = frage == null || frage.isEmpty() || TextUtils.count('?', frage) > 1
 						|| frage.contains("...") || !frage.startsWith(randomFrageTyp)
 						|| frage.trim().equalsIgnoreCase(randomFrageTyp);
 
@@ -67,7 +68,7 @@ public class QAGenerator extends AbstractGenerator {
 					continue;
 				}
 
-				return new QuestionAnswer(frage, antwort, randomFrageTyp);
+				return new QuestionAnswerResult(frage, antwort, randomFrageTyp);
 			} catch (Exception e) {
 				System.out.println("Retry.. " + i + " " + e.getMessage());
 				e.printStackTrace();
@@ -77,17 +78,5 @@ public class QAGenerator extends AbstractGenerator {
 		return null;
 	}
 
-	private int count(char pattern, String text) {
-		if (text == null || text.isEmpty()) {
-			return 0;
-		}
-
-		int count = 0;
-		for (char c : text.toCharArray()) {
-			if (c == pattern) {
-				count++;
-			}
-		}
-		return count;
-	}
+	
 }

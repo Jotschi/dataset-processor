@@ -4,13 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
-import de.jotschi.ai.processor.chat.llm.AnfrageGenerator;
 import de.jotschi.ai.processor.chat.llm.Models;
+import de.jotschi.ai.processor.chat.llm.anfrage.AnfrageGenerator;
+import de.jotschi.ai.processor.chat.llm.anfrage.AnfrageResult;
 import io.metaloom.ai.genai.llm.LLMProvider;
 import io.metaloom.ai.genai.llm.LargeLanguageModel;
 import io.metaloom.ai.genai.llm.ollama.OllamaLLMProvider;
@@ -37,9 +37,9 @@ public class LegacyEnhanceQAJsonLTest {
 //			}
 
 			String source = json.getString("source");
-			String anfrage = gen.generateTriggerQuestion(source);
-			if (anfrage != null) {
-				json.put("anfrage", anfrage);
+			AnfrageResult result = gen.generateTriggerQuestion(source, null);
+			if (result != null) {
+				json.put("anfrage", result.anfrage());
 				// System.out.println(enhanced.encodePrettily());
 				FileUtils.writeStringToFile(outputFile, json.encode() + "\n", Charset.defaultCharset(), true);
 			}

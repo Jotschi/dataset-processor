@@ -7,9 +7,10 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.FileUtils;
 
 import de.jotschi.ai.processor.DatasetEntryHandler;
-import de.jotschi.ai.processor.chat.llm.AnfrageGenerator;
-import de.jotschi.ai.processor.chat.llm.QAGenerator;
-import de.jotschi.ai.processor.chat.llm.QuestionAnswer;
+import de.jotschi.ai.processor.chat.llm.anfrage.AnfrageGenerator;
+import de.jotschi.ai.processor.chat.llm.anfrage.AnfrageResult;
+import de.jotschi.ai.processor.chat.llm.anfrage.qa.QAGenerator;
+import de.jotschi.ai.processor.chat.llm.anfrage.qa.QuestionAnswerResult;
 import io.metaloom.ai.genai.llm.LLMProvider;
 import io.metaloom.ai.genai.llm.LargeLanguageModel;
 import io.vertx.core.json.JsonObject;
@@ -30,17 +31,20 @@ public class KleinerAstronautChatQAHandler implements DatasetEntryHandler<Kleine
 
 	@Override
 	public void process(KleinerAstronautDatasetEntry entry) {
-		String text = entry.text();
-		if (entry.id() <= 12429) {
+		if (entry.id() <= 20738) {
 			return;
 		}
 		try {
-			String anfrage = anfrageGenerator.generateTriggerQuestion(text);
-			QuestionAnswer qa = qaGenerator.generateQA(text);
+			String text = entry.text();
+			String word1 = entry.word1();
+			String word2 = entry.word2();
+
+			AnfrageResult result = anfrageGenerator.generateTriggerQuestion(text, word1);
+			QuestionAnswerResult qa = qaGenerator.generateQA(text);
 			if (qa != null) {
 				JsonObject jsonOut = new JsonObject();
 				jsonOut.put("id", entry.id());
-				jsonOut.put("request", anfrage);
+				jsonOut.put("request", result.anfrage());
 				jsonOut.put("story", text);
 				jsonOut.put("question_typ", qa.typ());
 				jsonOut.put("question", qa.question());
@@ -50,8 +54,8 @@ public class KleinerAstronautChatQAHandler implements DatasetEntryHandler<Kleine
 				jsonOut.put("adj_2", entry.adj2());
 				jsonOut.put("topic", entry.topic());
 				jsonOut.put("verb", entry.verb());
-				jsonOut.put("word_1", entry.word1());
-				jsonOut.put("word_2", entry.word2());
+				jsonOut.put("word_1", word1);
+				jsonOut.put("word_2", word2);
 				try {
 					FileUtils.writeStringToFile(outputFile, jsonOut.encode() + "\n", Charset.defaultCharset(), true);
 				} catch (IOException e) {
