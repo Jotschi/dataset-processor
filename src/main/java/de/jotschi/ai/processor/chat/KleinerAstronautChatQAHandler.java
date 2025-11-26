@@ -32,9 +32,9 @@ public class KleinerAstronautChatQAHandler implements DatasetEntryHandler<Kleine
 
 	@Override
 	public void process(KleinerAstronautDatasetEntry entry) {
-//		if (entry.id() <= 20738) {
-//			return;
-//		}
+		if (entry.id() <= 6870) {
+			return;
+		}
 		try {
 			String text = entry.text();
 
